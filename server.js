@@ -6,14 +6,10 @@ const address = [];
 fs.createReadStream('input-routes.csv')
   .pipe(csv())
   .on('data', function (row) {
-    
-    if(graphs.find((node) => {node.name == row.to})){
+    if(graphs.find((node) => {node.name === row.to})){
         //found to nodes
-       
+        graphs.next = (row)
     }
-   
-   
-
     let node = {
         name: row.to,
         weight: row.weight,
