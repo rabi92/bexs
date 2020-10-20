@@ -3,29 +3,28 @@ const csv = require('csv-parser')
 const graphs = [];
 const address = [];
 
+function graphNode(name, weight){
+  this.name = name;
+  this.weight = weight;
+  this.visited = false;
+  this.next = null;
+}
+
 fs.createReadStream('input-routes.csv')
   .pipe(csv())
   .on('data', function (row) {
-    if(graphs.find((node) => {node.name === row.to})){
+    if(graphs.find((graphs) => {graphs.name == row.to})){
         //found to nodes
-        graphs.next = (row)
+        
     }
-    let node = {
-        name: row.to,
-        weight: row.weight,
-        visited: false,
-        next: []
-    }
-    let node2 = {
-        name: row.from,
-        weight : row.weight,
-        visited: false,
-        next: []
-    }
+    let node = new graphNode(row.to, row.weight);
+    let node2 = new graphNode(row.from, row.weight);
+    node.next = node2;
+  
     graphs.push(node)
   })
   .on('end', function () {
-    console.log(graphs)
+    console.log("graph: ", graphs)
     // TODO: SAVE users data to another file
   })
 
