@@ -28,7 +28,16 @@ fs.createReadStream('input-routes.csv')
       }
   })
   .on('end', function () {
-    getBestRoute(graph, graph.get('GRU'), graph.get('SCL'))
+
+    let startNode = graph.get("asd")
+    let endNode = graph.get("SCL")
+
+    if(!startNode || !endNode)
+    {
+      console.error("Invalid input")
+    }else
+      getBestRoute(graph, startNode, endNode)
+   
   })
 
   function getBestRoute(graph, startNode, endNode) {
