@@ -1,99 +1,109 @@
 const fs = require('fs')
 const csv = require('csv-parser')
-const graphs = [];
+const graph = new Map();
 const address = [];
+
+function graphNode(name, weight){
+  this.name = name;
+  this.weight = weight;
+  this.distance = null;
+  this.visited = false;
+}
 
 fs.createReadStream('input-routes.csv')
   .pipe(csv())
   .on('data', function (row) {
-    
-    if(graphs.find((node) => {node.name == row.to})){
-        //found to nodes
-       
-    }
-   
-   
+      if(graph.has(row.from)){
+        let list = graph.get(row.from);
+        list.push(new graphNode(row.to, parseInt(row.weight)))
+      } else {
+        graph.set(row.from, [new graphNode(row.from, parseInt(row.weight)), new graphNode(row.to, parseInt(row.weight))])
+      }
 
-    let node = {
-        name: row.to,
-        weight: row.weight,
-        visited: false,
-        next: []
-    }
-    let node2 = {
-        name: row.from,
-        weight : row.weight,
-        visited: false,
-        next: []
-    }
-    graphs.push(node)
+      if(graph.has(row.to)){
+        let list = graph.get(row.to);
+        list.push(new graphNode(row.from, parseInt(row.weight)))
+      } else {
+        graph.set(row.to, [new graphNode(row.to, parseInt(row.weight)), new graphNode(row.from, parseInt(row.weight))])
+      }
   })
   .on('end', function () {
-    console.log(graphs)
-    // TODO: SAVE users data to another file
+    getBestRoute(graph, graph.get('GRU'), graph.get('SCL'))
   })
 
- 
-//const express = require('express');
-//const Joi = require('joi'); 
-//const app = express();
-//app.use(express.json());
+  function getBestRoute(graph, startNode, endNode) {
+    let visited = {};
+    let unvisted = {};
 
-//const courses=[
-//     {id:1, name:'courses'},
-//     {id:1, name:'courses'},
-//     {id:1, name:'courses'},      
+    let resultSet = new Map();
+    for(const [key, value] of graph.entries()){
+        resultSet.set(key, {distance: null, previous: null })
+        unvisted[key] = true;
+    }
 
-//];
+    let current = startNode[0];
+    current.distance = 0;
+    resultSet.set(current.name, {distance: 0, previous: null})
+    let res;
 
-//app.get('/',(req,res)=>{
-//    res.send("testing");
+    while(Object.keys(unvisted).length > 0){
+     
+        //mark as visited
+        current.visited = true;
+        delete unvisted[current.name]
+        visited[current.name] = true;
 
-//});
+        //update distance of neighbours
+        nlist = graph.get(current.name)
+        console.log("Current: ", current)
+        currentRes = resultSet.get(current.name)
+        // console.log("Graph" , graph)
+        for(i in nlist){
+            if(i == 0)
+              continue
+            res = resultSet.get(nlist[i].name)
+            
+            if(res.distance == null || res.distance > (nlist[i].weight + currentRes.distance)){
+              let val = (currentRes.distance) ? currentRes.distance : 0;
+              val = val + nlist[i].weight;
+              nlist[i].distance = val;
+              resultSet.set(nlist[i].name, {distance: nlist[i].distance, previous: current.name}) 
+            }
+        }
 
-//app.get('/api/courses',(req,res)=>{
-//   res.send(JSON.stringify([1,2,3]));
-//});
+        //move on to shortest distant neighbour
+        let shortest = {
+          distance : null
+        }
+        for(i in nlist){
+            if((shortest.distance == null || nlist[i].distance < shortest.distance) && !nlist[i].visited){
+              shortest = nlist[i]
+            }
+        }
 
-//app.get('/api/courses/:id',(req,res)=>{
- //   let course = courses.find(c=>c.id === parseInt(req.params.id));/
-//    if(!course) res.status(404).send("give id course not found");
-//    res.send(course);
-// });
+        current = shortest;
+    }
 
-//app.post('/api/courses',(res,req)=>{
-//    const schema = {
-//        name:Joi.string().min(3).required()
-//    }
-//    const result = Joi.validate(req.body,schema)
-//    if(result.error){
-//        res.status(400).send(result.error.details[0].message);
-//        return;
-//    }
-//    const course = {
-//        id : courses.length+1,
-//        name:req.body.name
-//    };
-//    course.push(course);
-//    res.send(course);
+    // console.log(graph)
+    console.log("result" , resultSet)
 
-//}); 
+    let shortestPath = []
+    current = resultSet.get(endNode[0].name)
+    console.log("Start Node: ", startNode[0].name )
+    console.log("End Node: ", endNode[0].name)
+    console.log("Current Node: ", current)
+    shortestPath.push(endNode[0].name)
 
-//app.get('/api/course/:id',(req,res)=>{
-//   res.send(req.params.id);
-//});
-//
-//const port = process.env.PORT || 3000;
-//app.listen(port,()=>{
-  
-//    console.log(`listeining to port ${port}`);
+    console.log("cost: ", current.distance)
 
-//});
 
-//const Logger = require('./logger');
-//const logger = new Logger();
-//logger.on('messageLogged',(args)=> {
-//    console.log("recieved the message",args);
-    
-//});
-//logger.log('message');
+    while(current.previous != startNode[0].name ) {  
+      shortestPath.push(current.previous);
+      current =  resultSet.get(current.previous)
+      ;
+    }
+
+    shortestPath.push(startNode[0].name)
+    shortestPath.reverse()
+    console.log("shortest: ", shortestPath)
+  }
