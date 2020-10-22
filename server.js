@@ -55,7 +55,7 @@ fs.createReadStream('input-routes.csv')
 
         //update distance of neighbours
         nlist = graph.get(current.name)
-        console.log("Current: ", current)
+        // console.log("Current: ", current)
         currentRes = resultSet.get(current.name)
         // console.log("Graph" , graph)
         for(i in nlist){
